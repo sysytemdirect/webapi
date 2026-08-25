@@ -1,7 +1,4 @@
 use axum::{routing::get, serve, Router};
-use std::fs::{create_dir, exists, read_dir,read_to_string};
-use std::path::{Path, PathBuf};
-use std::{mem, vec};
 use tokio::fs;
 use tokio::time::{sleep, Duration};
 use sysinfo::{System,Components};
@@ -16,14 +13,16 @@ async fn  main() {
 }
 
 async  fn api () -> String {
-    let mem=memapi().await;
+    let mem =memapi().await;
     let cpu =cpuapi().await;
-    let  temp =tempapi().await;
+    let temp =tempapi().await;
+    let volta =voltaapi().await;
     format!(
-        "Memory:\n{}\nCPU: {}\ntemp: {:?}\n",
+        "Memory:\n{}\nCPU: {}\ntemp: {:?}\nvolta: {:?}",
         mem,
         cpu,
-        temp
+        temp,
+        volta
     )
 }
 async fn  memapi() -> String {
@@ -66,4 +65,13 @@ async fn tempapi() -> String {
     }
     result
 }
+
+async fn voltaapi() -> f64 {
+    let v=fs::read_to_string("/sys/bus/iio/devices/iio:device0/in_voltage2_raw").await.unwrap();
+    let volta:f64 =v.trim().parse().unwrap();
+    let Ratio_String = fs::read_to_string("/sys/bus/iio/devices/iio:device0/in_voltage_scale").await.unwrap();
+    let ratio:f64 = Ratio_String.trim().parse().unwrap();
+    volta*ratio*8.0
+}
+
 
